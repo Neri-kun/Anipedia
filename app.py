@@ -87,66 +87,7 @@ def search():
     # Get the current page from the query parameters, or default to page 1
     page = request.args.get(get_page_parameter(), type=int, default=1)
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    if date == "":
-        query = """
-           SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract ?date (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-        WHERE {
-                ?anime rdf:type dbo:Anime ;
-                 dbo:abstract ?abstract ;
-                 dbp:episodes ?episodes;
-                 dbp:first ?date;
-                 dbp:genre ?genre;
-                 foaf:name ?title .
-                FILTER CONTAINS(?title, \'"""+query_keyword+"""\')
-               }
-           """
-    else:
-        query = """
-                 SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                  WHERE {
-                          ?anime rdf:type dbo:Anime ;
-                           dbo:abstract ?abstract ;
-                           dbp:episodes ?episodes;
-                           dbp:first ?date;
-                           dbp:genre ?genre;
-                           foaf:name ?title .
-                          FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                          FILTER (?date >= \'""" + date + """\'^^xsd:date)
-                         }
-                 """
-
-        '''
-    sparql.setQuery(f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX anime: <http://example.org/anime#>
-
-        SELECT ?title ?genre ?year WHERE {{
-            ?anime a anime:Anime .
-            ?anime dct:title ?title .
-            ?anime anime:genre ?genre .
-            ?anime anime:year ?year .
-            FILTER regex(?title, "{query}", "i")
-        }}
-    """)
-    '''
-
-
-    if endDate!="":
-        query = """
-                       SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                        WHERE {
-                                ?anime rdf:type dbo:Anime ;
-                                 dbo:abstract ?abstract ;
-                                 dbp:episodes ?episodes;
-                                 dbp:first ?date;
-                                 dbp:genre ?genre;
-                                 foaf:name ?title .
-                                FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                                FILTER (?date >= \'""" + date + """\'^^xsd:date && ?date <= \'""" + endDate + """\'^^xsd:date)
-                               }
-                       """
-
+    query = generate_query(query_keyword, date, endDate)
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     all_results = sparql.query().convert()['results']['bindings']
@@ -157,18 +98,6 @@ def search():
     # Calculate the total number of pages for the search results
     num_pages = math.ceil(len(all_results) / results_per_page)
 
-    '''
-    # Generate URLs for the previous and next pages
-    query_params = {'query': query_keyword}
-    prev_url = None
-    if page > 1:
-        query_params['page'] = page - 1
-        prev_url = url_for('search', **query_params)
-    next_url = None
-    if page < num_pages:
-        query_params['page'] = page + 1
-        next_url = url_for('search', **query_params)
-    '''
     # Determine if there is a previous page and/or a next page
     has_prev = page > 1
     has_next = page < num_pages
@@ -194,64 +123,7 @@ def searchPaginated(page, query, date="", endDate=""):
     #query_keyword = query_keyword.replace("'", "\\'")
     # Perform SPARQL query and return results
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    if date == "":
-        query_statement = """
-              SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-           WHERE {
-                   ?anime rdf:type dbo:Anime ;
-                    dbo:abstract ?abstract ;
-                    dbp:episodes ?episodes;
-                    dbp:first ?date;
-                    dbp:genre ?genre;
-                    foaf:name ?title .
-                   FILTER CONTAINS(?title, \'""" + query + """\')
-                  }
-              """
-    else:
-        query_statement = """
-                    SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                 WHERE {
-                         ?anime rdf:type dbo:Anime ;
-                          dbo:abstract ?abstract ;
-                          dbp:episodes ?episodes;
-                          dbp:first ?date;
-                          dbp:genre ?genre;
-                          foaf:name ?title .
-                         FILTER CONTAINS(?title, \'""" + query + """\')
-                         FILTER (?date >= \'""" + date + """\'^^xsd:date)
-                        }
-                    """
-        '''
-    sparql.setQuery(f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX anime: <http://example.org/anime#>
-
-        SELECT ?title ?genre ?year WHERE {{
-            ?anime a anime:Anime .
-            ?anime dct:title ?title .
-            ?anime anime:genre ?genre .
-            ?anime anime:year ?year .
-            FILTER regex(?title, "{query}", "i")
-        }}
-    """)
-    '''
-
-    if endDate != "":
-        query_statement = """
-                         SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                          WHERE {
-                                  ?anime rdf:type dbo:Anime ;
-                                   dbo:abstract ?abstract ;
-                                   dbp:episodes ?episodes;
-                                   dbp:first ?date;
-                                   dbp:genre ?genre;
-                                   foaf:name ?title .
-                                  FILTER CONTAINS(?title, \'""" + query + """\')
-                                  FILTER (?date >= \'""" + date + """\'^^xsd:date && ?date < \'""" + endDate + """\'^^xsd:date)
-                                 }
-                         """
-
+    query_statement = generate_query(query, date, endDate)
     sparql.setQuery(query_statement)
     sparql.setReturnFormat(JSON)
     all_results = sparql.query().convert()['results']['bindings']
@@ -295,49 +167,7 @@ def destination(page,query, loop_index, date="", endDate=""):
     print(query)
 
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    if date == "":
-        query_statement = """
-               SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-            WHERE {
-                    ?anime rdf:type dbo:Anime ;
-                     dbo:abstract ?abstract ;
-                     dbp:episodes ?episodes;
-                     dbp:first ?date;
-                     dbp:genre ?genre;
-                     foaf:name ?title .
-                    FILTER CONTAINS(?title, \'""" + query + """\')
-                   }
-               """
-    else:
-        query_statement = """
-                     SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                  WHERE {
-                          ?anime rdf:type dbo:Anime ;
-                           dbo:abstract ?abstract ;
-                           dbp:episodes ?episodes;
-                           dbp:first ?date;
-                           dbp:genre ?genre;
-                           foaf:name ?title .
-                          FILTER CONTAINS(?title, \'""" + query + """\')
-                          FILTER (?date >= \'""" + date + """\'^^xsd:date)
-                         }
-                     """
-
-    if endDate != "":
-        query_statement = """
-                          SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                           WHERE {
-                                   ?anime rdf:type dbo:Anime ;
-                                    dbo:abstract ?abstract ;
-                                    dbp:episodes ?episodes;
-                                    dbp:first ?date;
-                                    dbp:genre ?genre;
-                                    foaf:name ?title .
-                                   FILTER CONTAINS(?title, \'""" + query + """\')
-                                   FILTER (?date >= \'""" + date + """\'^^xsd:date && ?date <= \'""" + endDate + """\'^^xsd:date)
-                                  }
-                          """
-
+    query_statement = generate_query(query, date, endDate)
     sparql.setQuery(query_statement)
     sparql.setReturnFormat(JSON)
     all_results = sparql.query().convert()['results']['bindings']
@@ -377,6 +207,38 @@ def utility_processor():
 
 
 
+
+def generate_query(query_keyword, startDate, endDate):
+
+    if startDate == "":
+        query = """
+                SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
+             WHERE {
+                     ?anime rdf:type dbo:Anime ;
+                      dbo:abstract ?abstract ;
+                      dbp:episodes ?episodes;
+                      dbp:first ?date;
+                      dbp:genre ?genre;
+                      foaf:name ?title .
+                     FILTER CONTAINS(?title, \'""" + query_keyword + """\')
+                     FILTER (?date <= \'""" + endDate + """\'^^xsd:date)
+                    }
+                """
+    else:
+        query = """
+                      SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
+                   WHERE {
+                           ?anime rdf:type dbo:Anime ;
+                            dbo:abstract ?abstract ;
+                            dbp:episodes ?episodes;
+                            dbp:first ?date;
+                            dbp:genre ?genre;
+                            foaf:name ?title .
+                           FILTER CONTAINS(?title, \'""" + query_keyword + """\')
+                           FILTER (?date >= \'""" + startDate + """\'^^xsd:date && ?date <= \'""" + endDate + """\'^^xsd:date)
+                          }
+                      """
+    return query
 
 
 
