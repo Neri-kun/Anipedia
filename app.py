@@ -59,7 +59,7 @@ def home():
     return render_template("anime_website.html",results=results["results"]["bindings"])
 
 
-
+#de refactorizat
 @app.route('/search', methods=['GET','POST'])
 def search():
 
@@ -72,42 +72,11 @@ def search():
     date = request.form['date']
     query_keyword = request.form['query']
     query_keyword = query_keyword.replace("'", "\\'")
-    # Perform SPARQL query and return results
+
 
     # Get the current page from the query parameters, or default to page 1
     page = request.args.get('page',default= 1, type=int)
-    page, per_page, offset = get_page_args(page_parameter='page',
-                                           per_page_parameter='per_page')
-    # Calculate the number of results to display per page
-    results_per_page = 10
-
-    # Calculate the start and end indices of the results to display on the current page
-    start_index = (page - 1) * results_per_page
-    end_index = start_index + results_per_page
-    # Get the current page from the query parameters, or default to page 1
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    query = generate_query(query_keyword, date, endDate)
-    sparql.setQuery(query)
-    sparql.setReturnFormat(JSON)
-    all_results = sparql.query().convert()['results']['bindings']
-    # Slice the results to only include the current page
-    total_results = len(all_results)
-    results = all_results[start_index:end_index]
-
-    # Calculate the total number of pages for the search results
-    num_pages = math.ceil(len(all_results) / results_per_page)
-
-    # Determine if there is a previous page and/or a next page
-    has_prev = page > 1
-    has_next = page < num_pages
-    # Generate pagination object
-    pagination = Pagination(page=page, total=total_results, per_page=results_per_page)
-    print(page)
-    # Render the search results template with the current page, total number of pages, and results
-    return render_template('search_results.html', results=results, current_page=page, num_pages=num_pages, has_prev=has_prev, has_next=has_next,
-                           query=query_keyword, page = page, pagination = pagination, date=date, endDate=endDate)
-
+    return searchPaginated(page,query_keyword, date, endDate)
 
 
 @app.route('/search/<int:page>/<query>/<date>/<endDate>', methods=['GET'])
@@ -119,8 +88,7 @@ def searchPaginated(page, query, date="", endDate=""):
     #print(request.args.get('query'))
     print(page)
     print(query)
-    #query_keyword = request.form['query']
-    #query_keyword = query_keyword.replace("'", "\\'")
+
     # Perform SPARQL query and return results
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
     query_statement = generate_query(query, date, endDate)
@@ -150,7 +118,6 @@ def searchPaginated(page, query, date="", endDate=""):
     #pagination = Pagination(page=page, total=total_results, per_page=results_per_page)
     print("Value of page before render: " + str(page))
 
-    global_results = results
     # Render the search results template with the current page, total number of pages, and results
     return render_template('search_results.html', results=results, current_page=page, num_pages=num_pages, has_prev=has_prev, has_next=has_next,
                            query=query, page=page, date=date, endDate=endDate)#, pagination=pagination)
