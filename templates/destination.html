@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Result Page</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+    <script src="path/to/font-awesome/js/font-awesome.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+	<div class="container">
+		<h1>Result</h1>
+		<div class="search-result">
+			<h2>Title : {{result["title"]["value"]}}</h2>
+			<p>Abstract : {{result["abstract"]["value"]}}</p>
+			<p>Number of released episodes : {{result["episodes"]["value"]}}</p>
+			<p>Date of release : {{result["date"]["value"]}}</p>
+			<p>Genre : {{result["genre_name"]["value"]}}</p>
+		</div>
+	</div>
+</body>
+</html>

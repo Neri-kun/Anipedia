@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Anipedia</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+	<!--<script src="anotherscript.js"></script>-->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	
+</head>
+<body>
+	<header>
+		<h1>Anipedia</h1>
+	</header>
+	<main>
+		<!--<div class="background"></div>-->
+	<div id="carousel-container">
+   <div id="carousel-images">
+      <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="Anime Picture 1">
+      <img src="{{ url_for('static', filename='images/image2.jpg') }}" alt="Anime Picture 2">
+      <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt="Anime Picture 3">
+	  <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="Anime Picture 4">
+   </div>
+   <div id="carousel-buttons">
+      <button id="prev-button"><</button>
+      <button id="next-button">></button>
+   </div>
+</div>
+
+
+		<div class="search-bar">
+			<form method="POST" action="{{ url_for('search') }}">
+				<!--<div class="container">-->
+					<label for="start-date">Start Date:</label>
+					<input type="text" name="date" placeholder="Select a date" class="form-control datepicker" id="datepicker">
+	<!--</div>-->	<label for="end-date">End Date:</label>
+					<input type="text" name="endDate" placeholder="Select a date" class="form-control datepicker" id="second-datepicker">
+				<input type="text" name = "query" placeholder="Search for anime...">
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+	 <script>
+  $(document).ready(function() {
+    $('#datepicker').datepicker({
+      format: 'yyyy-mm-dd',
+      autoclose: true,
+      todayHighlight: true,
+      endDate: new Date()
+    });
+
+    $('#second-datepicker').datepicker({
+      format: 'yyyy-mm-dd',
+      autoclose: true,
+      todayHighlight: true,
+      startDate: $('#datepicker').val(),
+      endDate: new Date()
+    });
+
+    $('#datepicker').on('change', function() {
+      var startDate = $(this).val();
+      $('#second-datepicker').datepicker('setStartDate', startDate);
+      if ($('#second-datepicker').val() == startDate) {
+        var nextDay = new Date(startDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        $('#second-datepicker').datepicker('update', nextDay);
+      }
+    });
+
+    // set initial value for endDate to current date
+    var currentDate = new Date();
+    var formattedDate = currentDate.getFullYear() + '-' + ('0' + (currentDate.getMonth() + 1)).slice(-2) + '-' + ('0' + currentDate.getDate()).slice(-2);
+    $('#second-datepicker').datepicker('update', formattedDate);
+  });
+    </script>
+				<label for="filter">Filter by:</label>
+				<!--<select name="filter" id="filter">
+					<option value="genre">Genre</option>
+					<option value="year">Year</option>
+					<option value="rating">Rating</option>
+				</select>-->
+
+				<input type="submit" value="Go" class="btn btn-primary">
+			</form>
+		</div>
+		<!--
+		<div>
+			{% for result in results %}
+			  <h1>{{ result["title"]["value"] }}</h1>
+			  <p>{{ result["episodes"]["value"] }}</p>
+			  <p>{{ result["date"]["value"] }}</p>
+			  <p>{{ result["abstract"]["value"] }}</p>
+			{% endfor %}
+  		</div>
+		-->
+		<!-- Rest of your content here -->
+	</main>
+	
+	<div class="container">
+  <!--<h2>Image Gallery</h2>
+  <p>The .thumbnail class can be used to display an image gallery.</p>
+  <p>The .caption class adds proper padding and a dark grey color to text inside thumbnails.</p>
+  <p>Click on the images to enlarge them.</p>-->
+	  <div class="row">
+	  {% for result in results %}
+		<div class="col-md-4">
+		  <div class="thumbnail">
+			<a href="{{ url_for('static', filename='images/image'~loop.index~'.jpg') }}" target="_blank">
+			  <img src="{{ url_for('static', filename='images/image'~loop.index~'.jpg') }}" style="width:100%">
+			  <div class="caption">
+				  <p>Title : {{result["title"]["value"]}}</p>
+				<p>Abstract : {{result["abstract"]["value"]}}</p>
+				  <!--<p>{{ loop.index }}</p>-->
+			  </div>
+			</a>
+		  </div>
+		</div>
+		{% endfor %}
+	  </div>
+</div>
+	
+	
+	
+</body>
+<script src="{{url_for('static', filename='script.js')}}"></script>
+</html>
