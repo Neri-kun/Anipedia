@@ -100,7 +100,6 @@
 		-->
 		<!-- Rest of your content here -->
 	</main>
-	
 	<div class="container">
   <!--<h2>Image Gallery</h2>
   <p>The .thumbnail class can be used to display an image gallery.</p>
@@ -110,8 +109,8 @@
 	  {% for result in results %}
 		<div class="col-md-4">
 		  <div class="thumbnail">
-			<a href="{{ url_for('static', filename='images/image'~loop.index~'.jpg') }}" target="_blank">
-			  <img src="{{ url_for('static', filename='images/image'~loop.index~'.jpg') }}" style="width:100%">
+			<a href="{{ urls[loop.index0] }}" target="_blank">
+			  <img src="{{ urls[loop.index0] }}" >
 			  <div class="caption">
 				  <p>Title : {{result["title"]["value"]}}</p>
 				<p>Abstract : {{result["abstract"]["value"]}}</p>

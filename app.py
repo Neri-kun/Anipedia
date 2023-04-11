@@ -1,6 +1,8 @@
 import math
 from io import BytesIO
 
+import requests
+from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, url_for
 from SPARQLWrapper import SPARQLWrapper, JSON
 from urllib.parse import urlencode
@@ -56,7 +58,14 @@ def home():
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-    return render_template("anime_website.html",results=results["results"]["bindings"])
+    urls = []
+    anime_results = results["results"]["bindings"]
+    for result in anime_results :
+        result["title"]["value"] = result["title"]["value"].replace("'", "\\'")
+        url = generate_url_by_anime_title(result["title"]["value"])
+        urls.append(url)
+
+    return render_template("anime_website.html",results=results["results"]["bindings"], urls = urls)
 
 
 #de refactorizat
@@ -162,7 +171,13 @@ def destination(page,query, loop_index, date="", endDate=""):
     # pagination = Pagination(page=page, total=total_results, per_page=results_per_page)
     print("Value of page before render: " + str(page))
 
-    return render_template('destination.html', result=result)
+
+    url = generate_url_by_anime_title(result["title"]["value"])
+
+
+
+
+    return render_template('destination.html', result=result, url = url)
 
 
 
@@ -208,6 +223,16 @@ def generate_query(query_keyword, startDate, endDate):
     return query
 
 
+def generate_url_by_anime_title(anime_title):
+    search_term = "Casshan: Robot Hunter"
+    url = f"https://www.google.com/search?q={anime_title}&tbm=isch"
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    image = soup.find("img", class_="yWs4tf")
+    print(image["src"])
+    return image["src"]
 
 if __name__ == '__main__':
     app.run()
