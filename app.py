@@ -194,37 +194,97 @@ def generate_query(query_keyword, startDate, endDate):
 
     if startDate == "":
         query = """
-                SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-             WHERE {
-                     ?anime rdf:type dbo:Anime ;
-                      dbo:abstract ?abstract ;
-                      dbp:episodes ?episodes;
-                      dbp:first ?date;
-                      dbp:genre ?genre;
-                      foaf:name ?title .
-                     FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                     FILTER (?date <= \'""" + endDate + """\'^^xsd:date)
+            SELECT DISTINCT
+                ?anime
+                    (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\'", "") AS ?title)
+                    (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                    (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
+                    (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
+                    (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
+                    (MIN(?first_date) AS ?first_release_date)
+                    (MAX(?last_date) AS ?last_release_date)
+                    ?homepage
+                    ?abstract
+                WHERE {
+                    ?anime rdf:type dbo:Anime.
+                    OPTIONAL {
+                        ?anime dbo:abstract ?abstract.
                     }
-                """
+                    OPTIONAL {
+                        ?anime foaf:name ?title.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:genre ?genre.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:episodes ?episode.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:studio ?studio.
+                    }
+                    FILTER (LANG(?abstract) = "en")
+                    OPTIONAL {
+                        ?anime foaf:homepage ?homepage .
+                    }
+                    OPTIONAL {
+                        ?anime dbp:first ?first_date.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:last ?last_date.
+                    }
+                    FILTER CONTAINS(?title, \'""" + query_keyword + """\')
+                    FILTER (?first_date <= '""" + endDate + """'^^xsd:date)
+                }
+        """
     else:
-        query = """
-                      SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract (CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)) AS ?genre_name)
-                   WHERE {
-                           ?anime rdf:type dbo:Anime ;
-                            dbo:abstract ?abstract ;
-                            dbp:episodes ?episodes;
-                            dbp:first ?date;
-                            dbp:genre ?genre;
-                            foaf:name ?title .
-                           FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                           FILTER (?date >= \'""" + startDate + """\'^^xsd:date && ?date <= \'""" + endDate + """\'^^xsd:date)
-                          }
-                      """
+        query =  """
+                      SELECT DISTINCT
+                ?anime
+                    (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\"", "") AS ?title)
+                    (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                    (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
+                    (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
+                    (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
+                    (MIN(?first_date) AS ?first_release_date)
+                    (MAX(?last_date) AS ?last_release_date)
+                    ?homepage
+                    ?abstract
+                WHERE {
+                    ?anime rdf:type dbo:Anime.
+                    OPTIONAL {
+                        ?anime dbo:abstract ?abstract.
+                    }
+                    OPTIONAL {
+                        ?anime foaf:name ?title.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:genre ?genre.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:episodes ?episode.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:studio ?studio.
+                    }
+                    FILTER (LANG(?abstract) = "en")
+                    OPTIONAL {
+                        ?anime foaf:homepage ?homepage .
+                    }
+                    OPTIONAL {
+                        ?anime dbp:first ?first_date.
+                    }
+                    OPTIONAL {
+                        ?anime dbp:last ?last_date.
+                    }
+                    FILTER CONTAINS(?title, \'""" + query_keyword + """\')
+                    FILTER (?date >= '""" + startDate + """'^^xsd:date && ?date <= '""" + endDate + """'^^xsd:date)
+                }
+                """
     return query
 
 
 def generate_url_by_anime_title(anime_title):
-    search_term = "Casshan: Robot Hunter"
+
     url = f"https://www.google.com/search?q={anime_title}&tbm=isch"
 
     response = requests.get(url)
