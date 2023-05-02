@@ -163,12 +163,6 @@ def destination(page,query, loop_index, date="", endDate=""):
     # Calculate the total number of pages for the search results
     num_pages = math.ceil(len(all_results) / results_per_page)
 
-    # Determine if there is a previous page and/or a next page
-    has_prev = page > 1
-    has_next = page < num_pages
-
-    # Generate pagination object
-    # pagination = Pagination(page=page, total=total_results, per_page=results_per_page)
     print("Value of page before render: " + str(page))
 
 
@@ -191,95 +185,55 @@ def utility_processor():
 
 
 def generate_query(query_keyword, startDate, endDate):
+    query = """
+              SELECT DISTINCT
+                  ?anime
+                      (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\'", "") AS ?title)
+                      (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                      (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
+                      (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
+                      (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
+                      (GROUP_CONCAT(DISTINCT ?first_release_date; separator=", ") AS ?first_release_dates)
+                      ?homepage
+                      ?abstract
+                  WHERE {
+                      ?anime rdf:type dbo:Anime.
+                      OPTIONAL {
+                          ?anime dbo:abstract ?abstract.
+                      }
+                      OPTIONAL {
+                          ?anime foaf:name ?title.
+                      }
+                      OPTIONAL {
+                          ?anime dbp:genre ?genre.
+                      }
+                      OPTIONAL {
+                          ?anime dbp:episodes ?episode.
+                      }
+                      OPTIONAL {
+                          ?anime dbp:studio ?studio.
+                      }
+                      FILTER (LANG(?abstract) = "en")
+                      OPTIONAL {
+                          ?anime foaf:homepage ?homepage .
+                      }
+                      OPTIONAL {
+                          ?anime dbp:first ?first_release_date.
+                      }
+                      OPTIONAL {
+                          ?anime dbp:last ?last_release_date.
+                      }
+                      FILTER(REGEX(?anime, \'http://dbpedia.org/resource/.*""" + query_keyword + """.*\', "i"))
+                """
 
     if startDate == "":
-        query = """
-            SELECT DISTINCT
-                ?anime
-                    (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\'", "") AS ?title)
-                    (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
-                    (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
-                    (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
-                    (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
-                    (MIN(?first_date) AS ?first_release_date)
-                    (MAX(?last_date) AS ?last_release_date)
-                    ?homepage
-                    ?abstract
-                WHERE {
-                    ?anime rdf:type dbo:Anime.
-                    OPTIONAL {
-                        ?anime dbo:abstract ?abstract.
-                    }
-                    OPTIONAL {
-                        ?anime foaf:name ?title.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:genre ?genre.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:episodes ?episode.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:studio ?studio.
-                    }
-                    FILTER (LANG(?abstract) = "en")
-                    OPTIONAL {
-                        ?anime foaf:homepage ?homepage .
-                    }
-                    OPTIONAL {
-                        ?anime dbp:first ?first_date.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:last ?last_date.
-                    }
-                    FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                    FILTER (?first_date <= '""" + endDate + """'^^xsd:date)
-                }
+        query += """\nFILTER (?first_release_date <= '""" + endDate + """'^^xsd:date)
+        }
         """
     else:
-        query =  """
-                      SELECT DISTINCT
-                ?anime
-                    (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\"", "") AS ?title)
-                    (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
-                    (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
-                    (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
-                    (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
-                    (MIN(?first_date) AS ?first_release_date)
-                    (MAX(?last_date) AS ?last_release_date)
-                    ?homepage
-                    ?abstract
-                WHERE {
-                    ?anime rdf:type dbo:Anime.
-                    OPTIONAL {
-                        ?anime dbo:abstract ?abstract.
-                    }
-                    OPTIONAL {
-                        ?anime foaf:name ?title.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:genre ?genre.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:episodes ?episode.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:studio ?studio.
-                    }
-                    FILTER (LANG(?abstract) = "en")
-                    OPTIONAL {
-                        ?anime foaf:homepage ?homepage .
-                    }
-                    OPTIONAL {
-                        ?anime dbp:first ?first_date.
-                    }
-                    OPTIONAL {
-                        ?anime dbp:last ?last_date.
-                    }
-                    FILTER CONTAINS(?title, \'""" + query_keyword + """\')
-                    FILTER (?date >= '""" + startDate + """'^^xsd:date && ?date <= '""" + endDate + """'^^xsd:date)
-                }
-                """
+        query += """FILTER (?first_release_date >= '""" + startDate + """'^^xsd:date && ?first_release_date <= '""" + endDate + """'^^xsd:date)
+        }"""
+
     return query
 
 
