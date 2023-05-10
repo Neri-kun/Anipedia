@@ -65,7 +65,27 @@ def home():
         url = generate_url_by_anime_title(result["title"]["value"])
         urls.append(url)
 
-    return render_template("anime_website.html",results=results["results"]["bindings"], urls = urls)
+    query = """SELECT DISTINCT (REPLACE(STRAFTER(str(?genre), "http://dbpedia.org/resource/"), "_", " ") AS ?genre)
+        WHERE {
+          ?anime rdf:type dbo:Anime;
+            dbp:genre ?genre.
+          FILTER (!regex(?genre, '^".*@".*en$'))
+            }"""
+    sparql = SPARQLWrapper(endpoint_url)
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSON)
+    genres = sparql.query().convert()["results"]["bindings"]
+    filtered_genres = []
+
+    for genre in genres:
+        genre_value = genre["genre"]["value"]
+        if genre_value and genre_value.strip():
+            filtered_genres.append(genre_value)
+    print("Genres :")
+    filtered_genres = list(filter(lambda genre: genre["genre"]["value"].strip(), genres))
+
+
+    return render_template("anime_website.html",results=results["results"]["bindings"], urls = urls, genres = filtered_genres)
 
 
 #de refactorizat
@@ -81,26 +101,31 @@ def search():
     date = request.form['date']
     query_keyword = request.form['query']
     query_keyword = query_keyword.replace("'", "\\'")
-
+    genre = request.form['genre']
 
     # Get the current page from the query parameters, or default to page 1
     page = request.args.get('page',default= 1, type=int)
-    return searchPaginated(page,query_keyword, date, endDate)
+    return searchPaginated(page,query_keyword, genre,date, endDate)
 
 
-@app.route('/search/<int:page>/<query>/<date>/<endDate>', methods=['GET'])
-@app.route('/search/<int:page>/<query>/<endDate>', methods=['GET'])
+
+#@app.route('/search/<int:page>/<query>/<genre>/<date>/<endDate>', methods=['GET'])
+@app.route('/search/<int:page>/<query>/<genre>/<date>/<endDate>', methods=['GET'])
+@app.route('/search/<int:page>/<query>/<genre>/<endDate>',defaults={'date': ''}, methods=['GET'])
+@app.route('/search/<int:page>/<query>/<endDate>',defaults={'date': '', 'genre': ''}, methods=['GET'])
 @app.route('/search/<int:page>/<query>', methods=['GET'])
-def searchPaginated(page, query, date="", endDate=""):
+def searchPaginated(page, query, genre="", date="", endDate=""):
 
     # Define the SPARQL endpoint and query
     #print(request.args.get('query'))
     print(page)
     print(query)
-
+    print("Genre : " + genre)
+    #print("Genre : " + genre)
+    #print(genre)
     # Perform SPARQL query and return results
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    query_statement = generate_query(query, date, endDate)
+    query_statement = generate_query(query, genre, date, endDate)
     sparql.setQuery(query_statement)
     sparql.setReturnFormat(JSON)
     all_results = sparql.query().convert()['results']['bindings']
@@ -129,21 +154,22 @@ def searchPaginated(page, query, date="", endDate=""):
 
     # Render the search results template with the current page, total number of pages, and results
     return render_template('search_results.html', results=results, current_page=page, num_pages=num_pages, has_prev=has_prev, has_next=has_next,
-                           query=query, page=page, date=date, endDate=endDate)#, pagination=pagination)
+                           query=query, page=page, date=date, endDate=endDate, genre=genre)#, pagination=pagination)
 
 
 
-
+@app.route('/destination/<int:page>/<query>/<int:loop_index>/<genre>/<date>/<endDate>',methods=['GET'])
 @app.route('/destination/<int:page>/<query>/<int:loop_index>/<date>/<endDate>',methods=['GET'])
+@app.route('/destination/<int:page>/<query>/<int:loop_index>/<genre>/<endDate>',methods=['GET'])
 @app.route('/destination/<int:page>/<query>/<int:loop_index>/<endDate>',methods=['GET'])
 @app.route('/destination/<int:page>/<query>/<int:loop_index>',methods=['GET'])
-def destination(page,query, loop_index, date="", endDate=""):
+def destination(page,query, loop_index, genre="", date="", endDate=""):
 
     print(page)
     print(query)
-
+    print(genre)
     sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    query_statement = generate_query(query, date, endDate)
+    query_statement = generate_query(query, genre,date, endDate)
     sparql.setQuery(query_statement)
     sparql.setReturnFormat(JSON)
     all_results = sparql.query().convert()['results']['bindings']
@@ -168,7 +194,14 @@ def destination(page,query, loop_index, date="", endDate=""):
 
     url = generate_url_by_anime_title(result["title"]["value"])
 
+    episodes_string = result["episodes"]["value"]  # Assuming it is a string like "1,2,3,4,5"
+    episodes_list = episodes_string.split(",")  # Split the string by comma to get a list of strings
+    episodes_int = [int(num) for num in episodes_list]  # Convert each string element to an integer
+    total_episodes = sum(episodes_int)  # Compute the sum of the integers
 
+    print(total_episodes)  # Output the sum of the episodes
+
+    result["episodes"]["value"] = total_episodes
 
 
     return render_template('destination.html', result=result, url = url)
@@ -184,7 +217,7 @@ def utility_processor():
 
 
 
-def generate_query(query_keyword, startDate, endDate):
+def generate_query(query_keyword, genre, startDate, endDate):
     query = """
               SELECT DISTINCT
                   ?anime
@@ -194,8 +227,11 @@ def generate_query(query_keyword, startDate, endDate):
                       (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
                       (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
                       (GROUP_CONCAT(DISTINCT ?first_release_date; separator=", ") AS ?first_release_dates)
+                      (GROUP_CONCAT(DISTINCT ?last_release_date; separator=", ") AS ?last_release_dates)
+                      (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?network), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?network), STRLEN("http://dbpedia.org/resource/")+1)), "_", ","), 2)); separator=",") AS ?networks)
                       ?homepage
                       ?abstract
+                      
                   WHERE {
                       ?anime rdf:type dbo:Anime.
                       OPTIONAL {
@@ -203,6 +239,9 @@ def generate_query(query_keyword, startDate, endDate):
                       }
                       OPTIONAL {
                           ?anime foaf:name ?title.
+                      }
+                      OPTIONAL { 
+                          ?anime dbo:network ?network.
                       }
                       OPTIONAL {
                           ?anime dbp:genre ?genre.
@@ -228,11 +267,17 @@ def generate_query(query_keyword, startDate, endDate):
 
     if startDate == "":
         query += """\nFILTER (?first_release_date <= '""" + endDate + """'^^xsd:date)
-        }
         """
     else:
-        query += """FILTER (?first_release_date >= '""" + startDate + """'^^xsd:date && ?first_release_date <= '""" + endDate + """'^^xsd:date)
-        }"""
+        query += """\nFILTER (?first_release_date >= '""" + startDate + """'^^xsd:date && ?first_release_date <= '""" + endDate + """'^^xsd:date)
+        """
+
+    if genre != "All genres":
+        words = genre.split()
+        for word in words:
+            query+= """\nFILTER(CONTAINS(STR(?genre),'""" + word + """'))
+                    """
+    query +="""\n}"""
 
     return query
 

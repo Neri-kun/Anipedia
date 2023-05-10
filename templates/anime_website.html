@@ -78,12 +78,22 @@
     $('#second-datepicker').datepicker('update', formattedDate);
   });
     </script>
-				<label for="filter">Filter by:</label>
+				<label for="genre">Filter by Genre:</label>
 				<!--<select name="filter" id="filter">
 					<option value="genre">Genre</option>
 					<option value="year">Year</option>
 					<option value="rating">Rating</option>
 				</select>-->
+				<!-- <form>-->
+				     <!--<input type="text" name="genre" placeholder="Select a genre">-->
+					  <select name="genre" id="genre">
+                        <option value="All genres">All genres</option>
+						{% for genre in genres %}
+						<option value="{{ genre['genre']['value'] }}">{{ genre['genre']['value']}}</option>
+						{% endfor %}
+					  </select>
+					  <input type="submit" value="Submit">
+    			<!--</form>-->
 
 				<input type="submit" value="Go" class="btn btn-primary">
 			</form>
