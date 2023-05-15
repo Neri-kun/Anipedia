@@ -14,45 +14,43 @@ from flask_paginate import Pagination, get_page_args, get_page_parameter
 from PIL import Image
 import requests
 global_results = []
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
+#app.config['STATIC_URL'] = '/static'
 
 # Define the DBpedia endpoint
-sparql = SPARQLWrapper("https://dbpedia.org/sparql")
+#sparql = SPARQLWrapper("https://dbpedia.org/sparql")
 
 @app.route('/')
 def home():
-    '''
-    url = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Monster_Strike.gif/300px-Monster_Strike.gif"
-
-    # Download the image from the URL
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-
-    # Get the image width and height
-    width, height = img.size
-
-    print(f"Image width: {width}")
-    print(f"Image height: {height}")
-
-    '''
 
     # Define the SPARQL endpoint and query
     endpoint_url = "http://dbpedia.org/sparql"
 
     # Set the SPARQL query
     query = """
-    SELECT DISTINCT ?anime ?title ?episodes ?date ?abstract ?genre
-    WHERE {
-      ?anime rdf:type dbo:Anime ;
-             dbo:abstract ?abstract ;
-             dbp:episodes ?episodes;
-             dbp:first ?date;
-             dbp:genre ?genre;
-             foaf:name ?title .
-      FILTER (LANG(?abstract) = 'en')
-    }
-    ORDER BY DESC (?date), DESC(?episodes)
-    LIMIT 10
+        SELECT DISTINCT ?anime (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\'", "") AS ?title) (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes) ?date ?abstract ?genres (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
+        WHERE {
+                {
+                    SELECT DISTINCT ?anime (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                    (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
+                        WHERE {
+                                ?anime rdf:type dbo:Anime.
+                                OPTIONAL { ?anime dbp:genre ?genre. }
+                                   
+                                }
+                }
+          ?anime rdf:type dbo:Anime ;
+                 dbo:abstract ?abstract;
+                 dbp:first ?date;
+                dbp:episodes ?episode.
+                 
+                OPTIONAL {
+                        ?anime dbp:studio ?studio.
+                }
+          FILTER (LANG(?abstract) = 'en')
+        }
+        ORDER BY DESC(?date)
+        LIMIT 12
     """
     sparql = SPARQLWrapper(endpoint_url)
     sparql.setQuery(query)
@@ -71,6 +69,26 @@ def home():
             dbp:genre ?genre.
           FILTER (!regex(?genre, '^".*@".*en$'))
             }"""
+
+    new_results = []
+
+    for result in results["results"]["bindings"] :
+
+        episodes_string = result["episodes"]["value"]  # Assuming it is a string like "1,2,3,4,5"
+        episodes_list = episodes_string.split(",")  # Split the string by comma to get a list of strings
+        try:
+            episodes_int = [int(num) for num in episodes_list]  # Convert each string element to an integer
+            total_episodes = sum(episodes_int)  # Compute the sum of the integers
+
+            result["episodes"]["value"] = total_episodes
+            new_results.append(result["episodes"]["value"])
+        except:
+            new_results.append("")
+
+    for i in range(len(new_results)):
+        results["results"]["bindings"][i]["episodes"]["value"] = new_results[i]
+
+
     sparql = SPARQLWrapper(endpoint_url)
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
@@ -194,11 +212,14 @@ def destination(page,query, loop_index, genre="", date="", endDate=""):
 
     url = generate_url_by_anime_title(result["title"]["value"])
 
+
     episodes_string = result["episodes"]["value"]  # Assuming it is a string like "1,2,3,4,5"
     episodes_list = episodes_string.split(",")  # Split the string by comma to get a list of strings
-    episodes_int = [int(num) for num in episodes_list]  # Convert each string element to an integer
-    total_episodes = sum(episodes_int)  # Compute the sum of the integers
-
+    try:
+        episodes_int = [int(num) for num in episodes_list]  # Convert each string element to an integer
+        total_episodes = sum(episodes_int)  # Compute the sum of the integers
+    except :
+        total_episodes = ""
     print(total_episodes)  # Output the sum of the episodes
 
     result["episodes"]["value"] = total_episodes
@@ -222,7 +243,7 @@ def generate_query(query_keyword, genre, startDate, endDate):
               SELECT DISTINCT
                   ?anime
                       (REPLACE(REPLACE(SUBSTR(STR(?anime), STRLEN("http://dbpedia.org/resource/") + 1), "_", " "), "\'", "") AS ?title)
-                      (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                      ?genres
                       (GROUP_CONCAT(DISTINCT REPLACE(STR(?studio), "http://dbpedia.org/resource/", ""); separator=", ") AS ?studios)
                       (GROUP_CONCAT(DISTINCT ?title; separator=", ") AS ?titles)
                       (GROUP_CONCAT(DISTINCT ?episode; separator=", ") AS ?episodes)
@@ -233,6 +254,15 @@ def generate_query(query_keyword, genre, startDate, endDate):
                       ?abstract
                       
                   WHERE {
+                  
+                                {
+                                    SELECT DISTINCT ?anime (GROUP_CONCAT(DISTINCT CONCAT(UCASE(SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 1, 1)), SUBSTR(REPLACE(LCASE(SUBSTR(STR(?genre), STRLEN("http://dbpedia.org/resource/")+1)), "_", " "), 2)); separator=", ") AS ?genres)
+                                    WHERE {
+                                        ?anime rdf:type dbo:Anime.
+                                        OPTIONAL { ?anime dbp:genre ?genre. }
+                                   
+                                    }
+                                }
                       ?anime rdf:type dbo:Anime.
                       OPTIONAL {
                           ?anime dbo:abstract ?abstract.
@@ -242,9 +272,6 @@ def generate_query(query_keyword, genre, startDate, endDate):
                       }
                       OPTIONAL { 
                           ?anime dbo:network ?network.
-                      }
-                      OPTIONAL {
-                          ?anime dbp:genre ?genre.
                       }
                       OPTIONAL {
                           ?anime dbp:episodes ?episode.
@@ -275,11 +302,25 @@ def generate_query(query_keyword, genre, startDate, endDate):
     if genre != "All genres":
         words = genre.split()
         for word in words:
-            query+= """\nFILTER(CONTAINS(STR(?genre),'""" + word + """'))
+            query+= """\nFILTER(CONTAINS(LCASE(STR(?genres)),'""" + word.lower() + """'))
                     """
     query +="""\n}"""
 
     return query
+
+def get_original_image_size(image_url):
+    response = requests.get(image_url, stream=True)
+    response.raw.decode_content = True
+
+    # Open the image using PIL
+    image = Image.open(response.raw)
+
+    # Get the original image size
+    original_size = image.size
+
+    return original_size
+
+
 
 
 def generate_url_by_anime_title(anime_title):
@@ -291,7 +332,15 @@ def generate_url_by_anime_title(anime_title):
 
     image = soup.find("img", class_="yWs4tf")
     print(image["src"])
+
+    image_url = image["src"]
+    # Get the original image size
+    original_size = get_original_image_size(image_url)
+    width, height = original_size
+
     return image["src"]
+
+
 
 if __name__ == '__main__':
     app.run()

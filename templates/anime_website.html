@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>Anipedia</title>
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
 	<!--<script src="anotherscript.js"></script>-->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
@@ -10,41 +10,18 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	
-	
-</head>
-<body>
-	<header>
-		<h1>Anipedia</h1>
-	</header>
-	<main>
-		<!--<div class="background"></div>-->
-	<div id="carousel-container">
-   <div id="carousel-images">
-      <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="Anime Picture 1">
-      <img src="{{ url_for('static', filename='images/image2.jpg') }}" alt="Anime Picture 2">
-      <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt="Anime Picture 3">
-	  <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="Anime Picture 4">
-   </div>
-   <div id="carousel-buttons">
-      <button id="prev-button"><</button>
-      <button id="next-button">></button>
-   </div>
-</div>
 
-
-		<div class="search-bar">
-			<form method="POST" action="{{ url_for('search')}}">
-				<!--<div class="container">-->
-					<label for="start-date">Start Date:</label>
-					<input type="text" name="date" placeholder="Select a date" class="form-control datepicker" id="datepicker">
-	<!--</div>-->	<label for="end-date">End Date:</label>
-					<input type="text" name="endDate" placeholder="Select a date" class="form-control datepicker" id="second-datepicker">
-				<input type="text" name = "query" placeholder="Search for anime...">
 	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+	    	<!--FONT AWESOME-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!--GOOGLE FONTS-->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Play&display=swap" rel="stylesheet">
 	 <script>
   $(document).ready(function() {
     $('#datepicker').datepicker({
@@ -78,6 +55,44 @@
     $('#second-datepicker').datepicker('update', formattedDate);
   });
     </script>
+
+
+	<!--FONT AWESOME-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!--GOOGLE FONTS-->
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Play&display=swap" rel="stylesheet">
+	
+</head>
+<body class="background">
+	<header>
+		<h1>Anipedia</h1>
+	</header>
+	<main>
+	<div id="carousel-container">
+   <div id="carousel-images">
+      <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="Anime Picture 1">
+      <img src="{{ url_for('static', filename='images/image2.jpg') }}" alt="Anime Picture 2">
+      <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt="Anime Picture 3">
+	  <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="Anime Picture 4">
+   </div>
+   <div id="carousel-buttons">
+      <button id="prev-button"><</button>
+      <button id="next-button">></button>
+   </div>
+</div>
+
+
+		<div class="search-bar">
+			<form method="POST" action="{{ url_for('search')}}">
+				<!--<div class="container">-->
+					<label for="start-date">Start Date:</label>
+					<input type="text" name="date" placeholder="Select a date" class="form-control datepicker" id="datepicker">
+	<!--</div>-->	<label for="end-date">End Date:</label>
+					<input type="text" name="endDate" placeholder="Select a date" class="form-control datepicker" id="second-datepicker">
+				<input type="text" name = "query" placeholder="Search for anime...">
+
 				<label for="genre">Filter by Genre:</label>
 				<!--<select name="filter" id="filter">
 					<option value="genre">Genre</option>
@@ -98,42 +113,67 @@
 				<input type="submit" value="Go" class="btn btn-primary">
 			</form>
 		</div>
-		<!--
-		<div>
-			{% for result in results %}
-			  <h1>{{ result["title"]["value"] }}</h1>
-			  <p>{{ result["episodes"]["value"] }}</p>
-			  <p>{{ result["date"]["value"] }}</p>
-			  <p>{{ result["abstract"]["value"] }}</p>
-			{% endfor %}
-  		</div>
-		-->
-		<!-- Rest of your content here -->
 	</main>
 	<div class="container">
-  <!--<h2>Image Gallery</h2>
-  <p>The .thumbnail class can be used to display an image gallery.</p>
-  <p>The .caption class adds proper padding and a dark grey color to text inside thumbnails.</p>
-  <p>Click on the images to enlarge them.</p>-->
-	  <div class="row">
-	  {% for result in results %}
-		<div class="col-md-4">
-		  <div class="thumbnail">
-			<a href="{{ urls[loop.index0] }}" target="_blank">
-			  <img src="{{ urls[loop.index0] }}" >
-			  <div class="caption">
-				  <p>Title : {{result["title"]["value"]}}</p>
-				<p>Abstract : {{result["abstract"]["value"]}}</p>
-				  <!--<p>{{ loop.index }}</p>-->
-			  </div>
-			</a>
-		  </div>
-		</div>
-		{% endfor %}
-	  </div>
+		<h2>Latest anime TV shows</h2>
+  		<div class="row">
+    	{% for result in results %}
+      		<div class="col-md-4">
+        		<div class="thumbnail" >
+          			<a href="{{ urls[loop.index0] }}" target="_blank">
+            			<img src="{{ urls[loop.index0] }}" alt="Image">
+          			</a>
+          			<div class="caption">
+            			<h5>{{ result["title"]["value"] }}</h5>
+            			<p class="synopsis">{{ result["abstract"]["value"] }}</p>
+          			</div>
+					<p>Release date : {{result["date"]["value"]}}</p>
+				{% if result["genres"]["value"] != '' %}
+					{% set genres = result["genres"]["value"].split(',') %}
+				Genres :
+				{% for genre in genres %}
+  					<div class="genre">{{genre}}</div>
+				{% endfor %}
+
+			{% endif %}
+			{% if result["studios"]["value"] != '' %}
+				Studios : <div class="studio-name"> {{result["studios"]["value"]}}</div>
+			{% endif %}
+			{% if result["episodes"]["value"] != '' %}
+				<p>Episodes : {{result["episodes"]["value"]}}</p>
+			{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
-	
-	
+
+
+	<footer>
+		<div class="footer">
+			<div class="row">
+				<a href="#"><i class="fa fa-facebook"></i></a>
+				<a href="#"><i class="fa fa-instagram"></i></a>
+				<a href="#"><i class="fa fa-youtube"></i></a>
+				<a href="#"><i class="fa fa-twitter"></i></a>
+			</div>
+
+			<div class="row">
+				<ul>
+					<li><a href="#">Contact us</a></li>
+					<li><a href="#">Our Services</a></li>
+					<li><a href="#">Privacy Policy</a></li>
+					<li><a href="#">Terms & Conditions</a></li>
+					<li><a href="#">Career</a></li>
+				</ul>
+			</div>
+
+			<div class="row">
+				<p style="text-align: center;">COPYRIGHT © 2021 INFERNO - ALL RIGHTS RESERVED || DESIGNED BY: MAHESH</p>
+			</div>
+
+		</div>
+	</footer>
 	
 </body>
 <script src="{{url_for('static', filename='script.js')}}"></script>
