@@ -20,6 +20,9 @@
 <body class="background">
 	<header>
 		<h1>Anipedia</h1>
+		       <div class="back-button">
+    <a href="{{ url_for('home') }}">&#8592;</a>
+  </div>
 		<!--
 		<nav class="navbar navbar-expand-md navbar-dark bg-dark">
 			  <a class="navbar-brand" href="/">Anipedia</a>
@@ -44,23 +47,34 @@
 	</header>
 
 	<div class="container">
-		<h1>General info</h1>
+		<h1>{{result["title"]["value"]}}</h1>
+		<br>
+		<br>
 		<div class="search-result">
-			<h2>Title : {{result["title"]["value"]}}</h2>
-			<p>Abstract : {{result["abstract"]["value"]}}</p>
-			<p>Number of released episodes: {{ result["episodes"]["value"]}}</p>
-			<p>First date(s) of release : {{result["first_release_dates"]["value"]}}</p>
-            <p>Last date(s) of release : {{result["last_release_dates"]["value"]}}</p>
-			<p>Genres : {{result["genres"]["value"]}}</p>
-			<p>Studio : {{result["studios"]["value"]}}</p>
-            <p>T.V. Networks : {{result["networks"]["value"]}}</p>
-            <p>Other titles related to {{result["title"]["value"]}}: {{result["titles"]["value"]}}</p>
+			<!--<h2>Title : {{result["title"]["value"]}}</h2>-->
+			<p><span style="font-weight: bold">Abstract</span> : <span class="bold-gray">{{result["abstract"]["value"]}}</span></p>
+			<p><span style="font-weight: bold">Number of released episodes</span> : <span class="bold-gray">{{ result["episodes"]["value"]}}</span></p>
+			<p><span style="font-weight: bold">First date(s) of release</span> : <span class="bold-gray">{{result["first_release_dates"]["value"]}}</span></p>
+			<p><span style="font-weight: bold">Last date(s) of release</span> : <span class="bold-gray">{{result["last_release_dates"]["value"]}}</span></p>
+			<span style="font-weight: bold">Genres</span> :
+				{% set genres = result["genres"]["value"].split(',') %}
+				{% for genre in genres %}
+			<div class="genre">{{genre}}</div>
+			    {% endfor %}
+
+			<p><span style="font-weight: bold">Studio</span> : <span class="custom-blue">{{result["studios"]["value"]}}</span></p>
+				<!--</div>-->
+
+			<p><span style="font-weight: bold">T.V. Networks</span> : <span class="bold-gray">{{result["networks"]["value"]}}</span></p>
+			<p><span style="font-weight: bold">Other titles related to </span> <span class="custom-blue">{{result["title"]["value"]}}</span> : <span class="custom-blue">{{result["titles"]["value"]}}</span></p>
 			{% if "homepage" in result %}
-				<p>Homepage : <a href="{{result['homepage']['value']}}">{{result["homepage"]["value"]}}</a></p>
+				<p><span style="font-weight: bold">Homepage</span> : <a href="{{result['homepage']['value']}}" style="font-weight: bold">{{result["homepage"]["value"]}}</a></p>
 			{% endif %}
-			<a href="{{ url }}" target="_blank">
-			  <img src="{{ url }}">
-			</a>
+			{% for url in urls %}
+				<a href="{{ url }}" target="_blank">
+			 	 <img src="{{ url }}"></a>
+					{% endfor %}
+
 		</div>
 	</div>
 	<footer>

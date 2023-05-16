@@ -210,7 +210,7 @@ def destination(page,query, loop_index, genre="", date="", endDate=""):
     print("Value of page before render: " + str(page))
 
 
-    url = generate_url_by_anime_title(result["title"]["value"])
+    urls = generate_urls_by_anime_title(result["title"]["value"])
 
 
     episodes_string = result["episodes"]["value"]  # Assuming it is a string like "1,2,3,4,5"
@@ -225,7 +225,7 @@ def destination(page,query, loop_index, genre="", date="", endDate=""):
     result["episodes"]["value"] = total_episodes
 
 
-    return render_template('destination.html', result=result, url = url)
+    return render_template('destination.html', result=result, urls = urls, page = page, query = query, genre = genre, endDate = endDate)
 
 
 
@@ -339,6 +339,22 @@ def generate_url_by_anime_title(anime_title):
     width, height = original_size
 
     return image["src"]
+
+def generate_urls_by_anime_title(anime_title):
+    url = f"https://www.google.com/search?q={anime_title}&tbm=isch"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    images = soup.find_all("img", class_="yWs4tf")
+    image_urls = []
+
+    for image in images[:5]:  # Limiting to 5 images
+        image_url = image["src"]
+        # Get the original image size
+        original_size = get_original_image_size(image_url)
+        width, height = original_size
+        image_urls.append(image_url)
+
+    return image_urls
 
 
 
