@@ -19,7 +19,7 @@
 </head>
 <body class="background">
 	<header>
-		<h1>Anipedia</h1>
+		<a class="clickable-heading" href="{{ url_for('home') }}"><h1>Anipedia</h1></a>
 		       <div class="back-button">
     <a href="{{ url_for('searchPaginated', query=query, page=page, genre=genre, date=date, endDate=endDate) }}">&#8592;</a>
   </div>
@@ -61,11 +61,13 @@
 				{% for genre in genres %}
 			<div class="genre">{{genre}}</div>
 			    {% endfor %}
-
-			<p><span style="font-weight: bold">Studio</span> : <span class="custom-blue">{{result["studios"]["value"]}}</span></p>
+			{% if result["studios"]["value"] != "" %}
+				<p><span style="font-weight: bold">Studio</span> : <span class="custom-blue">{{result["studios"]["value"]}}</span></p>
+			{% endif %}
 				<!--</div>-->
-
-			<p><span style="font-weight: bold">T.V. Networks</span> : <span class="bold-gray">{{result["networks"]["value"]}}</span></p>
+			{% if result["networks"]["value"] != "" %}
+				<p><span style="font-weight: bold">T.V. Networks</span> : <span class="bold-gray">{{result["networks"]["value"]}}</span></p>
+			{% endif %}
 			<p><span style="font-weight: bold">Other titles related to </span> <span class="custom-blue">{{result["title"]["value"]}}</span> : <span class="custom-blue">{{result["titles"]["value"]}}</span></p>
 			{% if "homepage" in result %}
 				<p><span style="font-weight: bold">Homepage</span> : <a href="{{result['homepage']['value']}}" style="font-weight: bold">{{result["homepage"]["value"]}}</a></p>

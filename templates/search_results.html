@@ -18,7 +18,7 @@
 </head>
 <body class="background-alternate">
 	<header>
-		<h1>Anipedia</h1>
+		<a class="clickable-heading" href="{{ url_for('home') }}"><h1>Anipedia</h1></a>
         <!-- <div class="back-button">
     <a href="{{ url_for('home') }}">Back to Anime Website</a>
   </div>-->
@@ -82,6 +82,9 @@
 
 		<div class="container">
 			{% if results %}
+            <div style="text-align: center;">
+                <p><span style="font-weight: bold">There is a total of </span><span class="bold-gray">{{total_results}}</span> <span style="font-weight:bold">search result(s).</span></p>
+            </div>
 				{% for result in results %}
                     <a href="{{ url_for('destination', page=current_page, query=query, genre=genre, date=date, endDate=endDate, loop_index=loop.index0) }}">
                         <div class="search-result">

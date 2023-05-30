@@ -83,35 +83,30 @@
    </div>
 </div>
 
-
 		<div class="search-bar">
-			<form method="POST" action="{{ url_for('search')}}">
-				<!--<div class="container">-->
-					<label for="start-date">Start Date:</label>
-					<input type="text" name="date" placeholder="Select a date" class="form-control datepicker" id="datepicker">
-	<!--</div>-->	<label for="end-date">End Date:</label>
-					<input type="text" name="endDate" placeholder="Select a date" class="form-control datepicker" id="second-datepicker">
-				<input type="text" name = "query" placeholder="Search for anime...">
+		  <form method="POST" action="{{ url_for('search')}}">
+			  <div class="new-footer">
+			<label for="start-date">Start Date:</label>
+			<input type="text" name="date" placeholder="Select a date" class="form-control datepicker" id="datepicker">
 
-				<label for="genre">Filter by Genre:</label>
-				<!--<select name="filter" id="filter">
-					<option value="genre">Genre</option>
-					<option value="year">Year</option>
-					<option value="rating">Rating</option>
-				</select>-->
-				<!-- <form>-->
-				     <!--<input type="text" name="genre" placeholder="Select a genre">-->
-					  <select name="genre" id="genre">
-                        <option value="All genres">All genres</option>
-						{% for genre in genres %}
-						<option value="{{ genre['genre']['value'] }}">{{ genre['genre']['value']}}</option>
-						{% endfor %}
-					  </select>
-					  <input type="submit" value="Submit">
-    			<!--</form>-->
+			<label for="end-date">End Date:</label>
+			<input type="text" name="endDate" placeholder="Select a date" class="form-control datepicker" id="second-datepicker">
 
-				<input type="submit" value="Go" class="btn btn-primary">
-			</form>
+			<label for="title">Title:</label>
+			<input type="text" name="query" placeholder="Search for anime..." class="input-field">
+
+			<label for="genre">Filter by Genre:</label>
+			<select name="genre" id="genre" class="input-field">
+			  <option value="All genres">All genres</option>
+			  {% for genre in genres %}
+			  <option value="{{ genre['genre']['value'] }}">{{ genre['genre']['value']}}</option>
+			  {% endfor %}
+			</select>
+
+			<!--<input type="submit" value="Submit" class="btn btn-primary">-->
+			<input type="submit" value="Submit" class="btn btn-secondary">
+			  </div>
+		  </form>
 		</div>
 	</main>
 	<div class="container">
@@ -119,28 +114,29 @@
   		<div class="row">
     	{% for result in results %}
       		<div class="col-md-4">
-        		<div class="thumbnail" >
+        		<div class="thumbnail">
           			<a href="{{ urls[loop.index0] }}" target="_blank">
             			<img src="{{ urls[loop.index0] }}" alt="Image">
           			</a>
           			<div class="caption">
             			<h5>{{ result["title"]["value"] }}</h5>
-            			<p class="synopsis">{{ result["abstract"]["value"] }}</p>
+						<p class="synopsis"><span class="bold-gray">{{ result["abstract"]["value"] }}</span></p>
           			</div>
-					<p>Release date : {{result["date"]["value"]}}</p>
+					<p><span style="font-weight: bold">Release date</span> : <span class="bold-gray">{{result["date"]["value"]}}</span></p>
 				{% if result["genres"]["value"] != '' %}
 					{% set genres = result["genres"]["value"].split(',') %}
-				Genres :
+					<p><span style="font-weight: bold">Genres</span> :
 				{% for genre in genres %}
-  					<div class="genre">{{genre}}</div>
+  					<span class="genre">{{genre}}</span>
 				{% endfor %}
+						</p>
 
 			{% endif %}
 			{% if result["studios"]["value"] != '' %}
-				Studios : <div class="studio-name"> {{result["studios"]["value"]}}</div>
+					<p><span style="font-weight: bold">Studios</span> : <span class="custom-blue"> {{result["studios"]["value"]}}</span></p>
 			{% endif %}
 			{% if result["episodes"]["value"] != '' %}
-				<p>Episodes : {{result["episodes"]["value"]}}</p>
+					<p><span style="font-weight: bold">Episodes</span> : <span class="bold-gray">{{result["episodes"]["value"]}}</span></p>
 			{% endif %}
         </div>
       </div>
